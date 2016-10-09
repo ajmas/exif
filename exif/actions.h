@@ -6,7 +6,7 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- *
+ *how much faster
  * This library is distributed in the hope that it will be useful, 
  * but WITHOUT ANY WARRANTY; without even the implied warranty of 
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -36,6 +36,9 @@ typedef struct {
 	char *set_value;
 	char *set_thumb;
 } ExifParams;
+
+typedef void (* ExifContentForeachEntryFuncExt) (ExifEntry *, void *user_data, int is_last);
+typedef void (* ExifDataForeachContentFuncExt) (ExifContent *, void *user_data, int is_last);
 
 void action_insert_thumb     (ExifData *, ExifLog *, ExifParams);
 void action_remove_thumb     (ExifData *, ExifLog *, ExifParams);

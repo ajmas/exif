@@ -172,6 +172,7 @@ log_func (ExifLog *log, ExifLogCode code, const char *domain,
  */
 static unsigned int list_tags = 0, show_description = 0;
 static unsigned int xml_output = 0;
+static unsigned int json_output = 0;
 static unsigned int extract_thumbnail = 0, remove_thumb = 0;
 static unsigned int remove_tag = 0, create_exif = 0, no_fixup = 0;
 static unsigned int list_mnote = 0;
@@ -228,6 +229,9 @@ main (int argc, const char **argv)
 		{"xml-output", 'x', POPT_ARG_NONE, &xml_output, 0,
 		 N_("Output in a XML format"),
 		 NULL},
+        {"json-output", 'j', POPT_ARG_NONE, &json_output, 0,
+            N_("Output in a JSON format"),
+            NULL},
 		{"debug", 'd', POPT_ARG_NONE, &log_arg.debug, 0,
 		 N_("Show debugging messages"), NULL},
 		POPT_TABLEEND};
@@ -445,11 +449,18 @@ main (int argc, const char **argv)
 				  "not available for Maker Notes"));
 				return 1;
 			}
+            if (json_output) {
+                exif_log (log, -1, "exif", _("JSON format is "
+                                             "not available for Maker Notes"));
+                return 1;
+            }
 			action_mnote_list (ed, p);
 		} else if (p.machine_readable)
 			action_tag_list_machine (ed, p);
 		else if (xml_output)
 			action_tag_list_xml (ed, p);
+        else if (json_output)
+            action_tag_list_json (ed, p);
 		else if (create_exif && !continue_without_file)
 			/* Nothing here. Data will be saved later. */
 			;

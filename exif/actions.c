@@ -657,3 +657,92 @@ action_tag_list_xml (ExifData *ed, ExifParams p)
 		exif_data_foreach_content (ed, show_xml, &p.use_ids);
 	fprintf(stdout, "</exif>\n");
 }
+
+// TODO move to libexif
+void
+exif_content_foreach_entry_ext (ExifContent *content,
+                            ExifContentForeachEntryFuncExt func, void *data, int is_last)
+{
+    unsigned int i;
+    
+    if (!content || !func)
+        return;
+    
+    for (i = 0; i < content->count; i++) {
+        func (content->entries[i], data, i == content->count - 1 && is_last);
+    }
+}
+
+// TODO refactor: while this works it really could be better
+// TODO move to libexif
+void
+exif_data_foreach_content_ext (ExifData *data, ExifDataForeachContentFuncExt func,
+                           void *user_data)
+{
+    unsigned int i, j, total;
+    
+    if (!data || !func)
+        return;
+    
+    total = 0;
+    for (i = 0; i < EXIF_IFD_COUNT; i++) {
+        total += data->ifd[i]->count;
+    }
+    
+    j = 0;
+    for (i = 0; i < EXIF_IFD_COUNT; i++) {
+        j +=  data->ifd[i]->count;
+        func (data->ifd[i], user_data, j >= total);
+    }
+}
+
+static void
+show_entry_json (ExifEntry *e, void *data, int is_last)
+{
+    unsigned char *ids = data;
+    char v[TAG_VALUE_BUF], t[TAG_VALUE_BUF];
+        
+    if (*ids) {
+        fprintf (stdout, "\"0x%04x\": \"", e->tag);
+        fprintf (stdout, "%s", exif_entry_get_value (e, v, sizeof (v)));
+        fprintf (stdout, "\"");
+        if (!is_last)
+            fprintf (stdout, ",");
+        fprintf (stdout, "\n");
+    } else {
+        strncpy (t, exif_tag_get_title_in_ifd(e->tag, exif_entry_get_ifd(e)), sizeof (t));
+        
+        /* Remove invalid characters from tag eg. (, ), space */
+        remove_bad_chars(t);
+        
+        fprintf (stdout, "    \"%s\": \"", t);
+        fprintf (stdout, "%s", exif_entry_get_value (e, v, sizeof (v)));
+        fprintf (stdout, "\"");
+        if (!is_last)
+            fprintf (stdout, ",");
+        fprintf (stdout, "\n");
+
+    }
+}
+
+static void
+show_json (ExifContent *content, void *data, int is_last)
+{
+    exif_content_foreach_entry_ext (content, show_entry_json, data, is_last);
+}
+
+void
+action_tag_list_json (ExifData *ed, ExifParams p)
+{
+    if (!ed) return;
+ 
+    fprintf(stdout, "{\n");
+    if (p.ifd < EXIF_IFD_COUNT)
+    /* Show only a single IFD */
+        show_json(ed->ifd[p.ifd], &p.use_ids, 1);
+    else
+    /* Show contents of all IFDs */
+        exif_data_foreach_content_ext (ed, show_json, &p.use_ids);
+    fprintf(stdout, "}\n");
+}
+
